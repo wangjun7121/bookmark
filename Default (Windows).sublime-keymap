@@ -6,6 +6,7 @@
     // { "keys": ["ctrl+."], "command": "old_bookmark_set", "args": {"key": 1}},
 	// { "keys": ["f11"], "command": "old_bookmark_goto", "args": {"key": 1}},
     // { "keys": ["f11"], "command": "bookmark_set"},
-	{ "keys": ["f8"], "command": "bookmark_set"},
+    { "keys": ["ctrl+e"], "command": "goto_windows_explorer"},
+    { "keys": ["f8"], "command": "bookmark_set"},
 	{ "keys": ["f12"], "command": "bookmark_goto"}
 ]

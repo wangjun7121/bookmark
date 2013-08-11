@@ -59,6 +59,10 @@ class BMSetting:
         # 保存回去
         return self.set(self.bmkey, bm_list)
 
+    ### 保存当前的配置的操作
+    def save(self):
+        return sublime.save_settings(self.file)
+
     ###  获得 bookmark 的信息，传递空参数则返回全部 bookmark
     def getbm(self, bookmark_name = ""):
         bookmark_name = str(bookmark_name).strip()
@@ -97,25 +101,33 @@ class BookmarkEvent(sublime_plugin.EventListener):
 
     # 关闭的时候的事件，  pre_close 也可以考虑检查下
     def on_pre_close(self, view):
-        ### 这里要判断，有需要保存的 region 才去操作
+        # 经过测试确认，发现一般想删还删不了：剪切走也会自动移动
+        self.save_bookmark(view)
 
-        # if  len(view.get_regions(mark_id)) < 1:
-        #     sublime.status_message('OnCloseNoRegions @ ' + time.strftime("%Y-%m-%d %X @ " + str(mark_id) ))
-        #     return
+    # 保存文件的时候也保存 bookmark
+    def on_post_save(self, view):
+        self.save_bookmark(view)
 
-        # region_mark = view.get_regions(mark_id)[0]
+    ### 保存当前 view 的书签
+    def save_bookmark(self, view):
 
-        # sublime.status_message('BookmarkEvent @ ' + time.strftime("%Y-%m-%d %X - ") + mark_id)
+        ### 计时统计下消耗时间看看
+        start_time = time.time()
+        ### 获得保存的 region 信息: 属于当前文件才保存
+        bm_list = BMSetting().getbm()
+        for bookmark_name in bm_list:
+            info = bm_list[bookmark_name]
+            if view.file_name() == info["file"]:
+                # 获得最新位置以后保存： 经实测是删除不了的，万一有不存在，不保存就是
+                region = view.get_regions(BMSetting.bmkey + bookmark_name)
+                # 如果没找到则跳过： 确信过删除不了的，以后考虑单独删除
+                bm_list[bookmark_name]['a'] = region[0].a
+                bm_list[bookmark_name]['b'] = region[0].b
 
-        # settings = sublime.load_settings(BookmarkConst['data_file'])
-        # ########???? 知道怎么读取一个设置的子项，但是不知道怎么写， 直接赋值一个字典不行，先保存俩值好了
-        # set_value = {"file": view.file_name(), "region_a": region_mark.a, "region_b": region_mark.b}
-        # settings.set(mark_id, set_value)
-        # # settings.set(mark_id + ".file", str(view.file_name()) )
-        # # settings.set(mark_id + ".region", str(region_mark))
-        # sublime.save_settings(BookmarkConst['data_file'])
-        return
-
+        BMSetting().set(BMSetting.bmkey, bm_list)
+        # 保存的动作
+        cost_time = time.time() - start_time
+        return 
 
 
 
@@ -197,7 +209,7 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
             regions = [sublime.Region(int(a), int(b) )]
 
             ###TODO 后续看使用情况如何，可以考虑根据打开文件的大小决定延迟时间
-            sublime.set_timeout(lambda: test_timeout(curr_view, regions), 1000)
+            sublime.set_timeout(lambda: test_timeout(curr_view, regions), 100)
         else:
             regions = curr_view.get_regions(BMSetting.bmkey + name)
 
