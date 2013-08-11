@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+import sublime, sublime_plugin
+import time
+import os
+
+
 """
 
 目前已经的问题:
@@ -15,8 +20,7 @@ hick; hickwu@qq.com
 
 """
 
-import sublime, sublime_plugin
-import time
+
 
 class BMSetting:
     """
@@ -208,3 +212,11 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
 
         return
 
+
+"""
+回到 windows 下的资源管理器
+"""
+class GotoWindowsExplorerCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        curr_path = os.path.dirname(self.view.file_name())
+        os.popen("explorer /e," + curr_path)
