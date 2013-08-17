@@ -13,8 +13,8 @@ import os
 
 初步计划:
 
+- 记住使用频率，默认打开的时候就在状态栏提示最常用的和最近打开的
 - 导入 emacs 的 bookmark 
-- 设置和打开 bookmark 输名字的时候可以利用 on_change 实现自动补齐。
 
 hick; hickwu@qq.com
 
@@ -134,12 +134,12 @@ class BookmarkEvent(sublime_plugin.EventListener):
 class BookmarkSetCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         # 用户交互输入面板
-        self.view.window().show_input_panel('set bookmark name', '', self.bookmark_input_name, 'on_change', None)
+        self.view.window().show_input_panel('set bookmark name', '', self.after_input_name, 'on_change', None)
 
         sublime.status_message('BookmarkSetCommand@ ' + time.strftime("%Y-%m-%d %X"))
 
     ### 处理输入的书签名
-    def bookmark_input_name(self, name):
+    def after_input_name(self, name):
         name = str(name)
         name = name.strip()
         if len(name) < 1:
@@ -176,13 +176,25 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
     因为在没有打开任何 view 的时候没有 TextCommand 可取，这里必须继承 WindowCommand 以免没有打开 view 时报错
     注意 WindowCommand 的 run 不能有第二个参数
     """
+    # 在用户输入之前准备好可选书签列表
+    bm_name_list = []
+    # 记录用户上次输入
+    last_input = ""
+
     def run(self):
         # 用户交互输入面板
-        self.window.show_input_panel('goto bookmark name', '', self.bookmark_input_name, 'on_change', None)
+        self.window.show_input_panel('goto bookmark name', '', self.after_input_name, self.on_input_change, None)
         sublime.status_message('BookmarkSetCommand @ ' + time.strftime("%Y-%m-%d %X"))
 
+        # 获得所有 bookmark name 列表, 一边自动提示功能
+        if len(self.bm_name_list) < 1:
+            bm_list = BMSetting().getbm()
+            for bm_name in bm_list:
+                self.bm_name_list.append(bm_name)
+
+
     ### 处理输入的书签名
-    def bookmark_input_name(self, name):
+    def after_input_name(self, name):
         name = str(name)
         name = name.strip()
         if len(name) < 1:
@@ -223,6 +235,40 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
             curr_view.sel().add(regions[0])
 
         return
+
+
+    ### 输入变化事件
+    def on_input_change(self, text):
+        # 如果发现用户最新输入的是一个数字，则去掉该数字以后继续进行匹配
+        if len(text) > 0:
+            self.last_input = text[-1]
+            if self.last_input >= "0" and self.last_input <= "9":
+                text = text[0:-1]
+            
+        # 匹配用户输入
+        matchs = []
+        for bm in self.bm_name_list:
+            if bm.find(text) >= 0:
+                matchs.append(bm)
+
+
+        matchstr = " ***** select by number *****  "
+        i = 1
+        for m in matchs:
+            if str(i) == self.last_input:
+                self.after_input_name(m)
+                break
+
+            # 超过 9 个的就不显示了，只加省略号
+            if i > 9:
+                matchstr += " ... "
+                continue
+
+            matchstr += str(i) + ":" + m + "  "
+            i += 1
+
+        ###hicktodo 因为依赖状态栏，这里最好是判断下状态栏状态，没有显示的话先显示，timeout 几秒以后关闭都 ok
+        sublime.status_message(matchstr)
 
 
 """
