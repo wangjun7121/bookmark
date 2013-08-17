@@ -209,7 +209,7 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
             regions = [sublime.Region(int(a), int(b) )]
 
             ###TODO 后续看使用情况如何，可以考虑根据打开文件的大小决定延迟时间
-            sublime.set_timeout(lambda: test_timeout(curr_view, regions), 100)
+            sublime.set_timeout(lambda: test_timeout(curr_view, regions), 500)
         else:
             regions = curr_view.get_regions(BMSetting.bmkey + name)
 

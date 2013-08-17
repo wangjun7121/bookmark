@@ -1,12 +1,5 @@
 [
-    // 不知道为何 ctrl+f12 等设置不了， f12 却可以设置， 查了明明没有被占用
-    // { "keys": ["ctrl+1"], "command": "test111"},
-    // { "keys": ["ctrl+2"], "command": "test222"},
-    // { "keys": ["f10"], "command": "bookmark_test"},
-    // { "keys": ["ctrl+."], "command": "old_bookmark_set", "args": {"key": 1}},
-	// { "keys": ["f11"], "command": "old_bookmark_goto", "args": {"key": 1}},
-    // { "keys": ["f11"], "command": "bookmark_set"},
-    { "keys": ["ctrl+e"], "command": "goto_windows_explorer"},
+    { "keys": ["ctrl+e", "ctrl+e"], "command": "goto_windows_explorer"},
     { "keys": ["f8"], "command": "bookmark_set"},
 	{ "keys": ["f12"], "command": "bookmark_goto"}
 ]
