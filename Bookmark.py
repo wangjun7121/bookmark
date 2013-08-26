@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import sublime, sublime_plugin
-import time
 import os
+import time
 
 
 """
@@ -184,6 +184,7 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
     bm_name_list = []
     # 记录用户上次输入
     last_input = ""
+    
 
     def run(self):
         # 用户交互输入面板
@@ -208,10 +209,19 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
         curr_view = self.window.active_view()
         setting_info = BMSetting().getbm(name)
 
-        ### 如果没找到，则提示
+        ### 如果没找到，则全文匹配第一个符合的
+        if len(setting_info) < 1:
+            for bm in self.bm_name_list:
+                if bm.find(name) >= 0:
+                    setting_info = BMSetting().getbm(bm)
+                    break
+
+
+        # 还是没有则提示没找到
         if len(setting_info) < 1:
             sublime.status_message("find no bookmark named: " + name)
             return 
+
 
         ### 着时候可能没有活动窗口
         if curr_view == None or curr_view.file_name() != setting_info['file']:
@@ -250,29 +260,29 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
                 text = text[0:-1]
             
         # 匹配用户输入
+        matchstr = " ***** select by number *****  "
+        i = 1
+
         matchs = []
         for bm in self.bm_name_list:
             if bm.find(text) >= 0:
                 matchs.append(bm)
 
+        # for m in matchs:
+                if str(i) == self.last_input:
+                    self.after_input_name(bm)
+                    break
 
-        matchstr = " ***** select by number *****  "
-        i = 1
-        for m in matchs:
-            if str(i) == self.last_input:
-                self.after_input_name(m)
-                break
+                # 超过 9 个的就不显示了，只加省略号
+                if i > 9:
+                    matchstr += " ... "
+                    continue
+                # 如果有超过 20 个就直接不管了
+                if i > 20:
+                    break
 
-            # 超过 9 个的就不显示了，只加省略号
-            if i > 9:
-                matchstr += " ... "
-                continue
-            # 如果有超过 20 个就直接不管了
-            if i > 20:
-                break
-
-            matchstr += str(i) + ":" + m + "  "
-            i += 1
+                matchstr += str(i) + ":" + bm + "  "
+                i += 1
 
         ###hicktodo 因为依赖状态栏，这里最好是判断下状态栏状态，没有显示的话先显示，timeout 几秒以后关闭都 ok
         sublime.status_message(matchstr)
