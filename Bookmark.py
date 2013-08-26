@@ -157,6 +157,10 @@ class BookmarkSetCommand(sublime_plugin.TextCommand):
 
         ### 保存
         BMSetting().addbm(name, self.view.file_name(), region_mark.a, region_mark.b)
+
+        ### 列表中增加以便及时提醒: 清空以后载入时会自动全 load
+        BookmarkGotoCommand.bm_name_list = []
+
         sublime.status_message("set bookmark done for " + name)
 
 
@@ -263,6 +267,9 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
             if i > 9:
                 matchstr += " ... "
                 continue
+            # 如果有超过 20 个就直接不管了
+            if i > 20:
+                break
 
             matchstr += str(i) + ":" + m + "  "
             i += 1
