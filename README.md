@@ -13,14 +13,16 @@ sublime text 自带的 bookmark 比较简单，不支持自定义名字的 bookm
 
 **安装**
 
-git clone 本代码库或者下载 zip 文件以后，直接放在 sublime text 的扩展目录即可。
-比如 `D:\Program\Sublime3\Data\Packages\Bookmark`
+git clone 本代码库到 bookmark 文件夹，或者下载 zip 解压，直接放在 sublime text 
+的扩展目录即可。比如 `D:\Program\Sublime3\Data\Packages\Bookmark`
 
 **用法**
 
 - sublime text 中打开某个文件，按 f8 下方提示框会提示输入书签名，输完回车即可。
 - 按 f12 ， 下方提示框输书签名，如果打开了状态栏，会在状态栏提示匹配的书签，
   回车打开第一个匹配的书签；也可以根据状态栏提示编号，按数字键选择打开的书签
+- windows 打开某个文件以后，`ctrl-e e`(按住 ctrl 不放，连按两次 e)调用资源管
+  理器打开所在目录
  
 **注意**
 
