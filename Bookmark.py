@@ -214,7 +214,7 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
             for bm in self.bm_name_list:
                 if bm.find(name) >= 0:
                     setting_info = BMSetting().getbm(bm)
-                    breaka
+                    break
 
 
         # 还是没有则提示没找到
