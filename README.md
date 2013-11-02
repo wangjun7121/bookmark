@@ -1,7 +1,7 @@
-named bookmark for sublime text
+hick-bookmark: named bookmark for sublime text
 
 sublime text 自带的 bookmark 比较简单，不支持自定义名字的书签，关闭 
-以后也不会自动保存书签，所以写了该插件。
+以后也不会自动保存书签，所以写了 hick-bookmark 插件。
 
 目前只支持 sublime text 3。
 
