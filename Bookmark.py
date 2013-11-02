@@ -14,10 +14,8 @@ import os
 初步计划:
 
 - 记住使用频率，默认打开的时候就在状态栏提示最常用的和最近打开的
-- 导入 emacs 的 bookmark 
-
+- 导入 emacs 的 bookmark ~hick
 hick; hickwu@qq.com
-
 """
 
 
@@ -82,6 +80,14 @@ class BMSetting:
 
 ### 测试监听事件 
 class BookmarkEvent(sublime_plugin.EventListener):
+
+    BOOKMARK_REG = "~[A-Za-z0-9]+"
+    MAX_HIGHLIGHT_ONE_VIEW = 200
+    bookmarks_for_view = {}
+    ### 保存每个 view 的 scope 列表
+    scopes_for_view = {}
+    ignored_views = []
+
     """
     其实最好参考 API 和这里全部都定义 https://github.com/titoBouzout/BufferScroll/blob/master/BufferScroll.py
     """
@@ -98,6 +104,8 @@ class BookmarkEvent(sublime_plugin.EventListener):
                 region_mark = sublime.Region(int(info['a']), int(info['b'])) # 自己定义 mark
                 view.add_regions(BMSetting.bmkey + bookmark_name, [region_mark], BMSetting.bmkey + bookmark_name,
                     icon, sublime.HIDDEN | sublime.PERSISTENT)
+        # 高亮书签
+        self.highlight_bookmark(view)
 
     # 关闭的时候的事件，  pre_close 也可以考虑检查下
     def on_pre_close(self, view):
@@ -108,8 +116,58 @@ class BookmarkEvent(sublime_plugin.EventListener):
     def on_post_save(self, view):
         self.save_bookmark(view)
 
-    ### 保存当前 view 的书签
-    def save_bookmark(self, view):
+    # 修改文本的事件
+    def on_modified(self, view):
+        self.highlight_bookmark(view)    
+
+    def on_close(self, view):
+        ###hick 好像是清理变量？没完全看明白为什么需要清理？ 避免关闭文件浪费内存？
+        for map in [self.bookmarks_for_view, self.scopes_for_view, self.ignored_views]:
+            if view.id() in map:
+                del map[view.id()]
+
+    def highlight_bookmark(self, view): 
+        ###hick 如果在忽略的列表则不渲染
+        if view.id() in self.ignored_views: 
+            return
+        sublime.status_message('highlight_bookmark' + time.strftime("%Y-%m-%d %X"))
+        # 先去掉之前的高亮，再重新查找出来
+        self.rmhighlight_bookmark(view)
+        bookmarks = view.find_all(self.BOOKMARK_REG)
+        ###hick 当 bookmarks 数量过多时，把当前视图列为不高亮的 view
+        if len(bookmarks) > self.MAX_HIGHLIGHT_ONE_VIEW:
+            sublime.status_message("the count of bookmarks of this view is too much")
+            self.ignored_views.append(view.id())
+            return
+        # 记录 bookmark 的 view 以及具体位置
+        self.bookmarks_for_view[view.id()] = bookmarks
+        # 没完全理解， 貌似是把所有 bookmark 的范围 scope 保存到 scope_map
+        scope_map = {}
+        for bm in self.bookmarks_for_view[view.id()]:
+            scope_name = view.scope_name(bm.a)
+            scope_map.setdefault(scope_name, [])
+            scope_map[scope_name] += [sublime.Region(pos, pos) for pos in range(bm.a, bm.b)]
+
+        for scope_name in scope_map:
+            ###hick 加下划线
+            ###hick 下划线颜色由 flags 前面的参数决定，可以是 
+            ### string comtment invalid  keyword entity constant storage support variable 
+            ### 白色    灰色    深橙-for 深橙-for   --- 貌似颜色是跟主体相关的
+            ### 这里有相关颜色的定义 http://tmtheme-editor.herokuapp.com/ https://github.com/aziz/tmtheme-editor
+            ###hick icon 为行号旁边的图标，还可以是  dot, circle, bookmark 和 cross.
+
+            ### example ~test 
+            ### example ~doc
+            view.add_regions(u'visitable-bookmarks ' + scope_name, scope_map[scope_name], "comtment", icon="dot", flags=sublime.DRAW_EMPTY_AS_OVERWRITE)
+        self.scopes_for_view[view.id()] = scope_map.keys()
+
+    def rmhighlight_bookmark(self, view):
+        if view.id() in self.scopes_for_view:
+            for scope_name in self.scopes_for_view[view.id()]:
+                view.erase_regions(u'visitable-bookmarks ' + scope_name)
+ 
+    ### 保存当前 view 的书签  
+    def save_bookmark(self, view): 
 
         ### 计时统计下消耗时间看看
         start_time = time.time()
@@ -186,16 +244,46 @@ class BookmarkGotoCommand(sublime_plugin.WindowCommand):
     last_input = ""
     
 
-    def run(self):
-        # 用户交互输入面板
-        self.window.show_input_panel('goto bookmark name', '', self.after_input_name, self.on_input_change, None)
-        sublime.status_message('BookmarkSetCommand @ ' + time.strftime("%Y-%m-%d %X"))
+    # def run(self, edit, ref=None,val=None):
+    def run(self, ref=None):
 
-        # 获得所有 bookmark name 列表, 一边自动提示功能
-        if len(self.bm_name_list) < 1:
-            bm_list = BMSetting().getbm()
-            for bm_name in bm_list:
-                self.bm_name_list.append(bm_name)
+        ### 如果书输入跳转的方式
+        if ref == "input":
+            # 用户交互输入面板
+            self.window.show_input_panel('goto bookmark name', '', self.after_input_name, self.on_input_change, None)
+            sublime.status_message('BookmarkSetCommand @ ' + time.strftime("%Y-%m-%d %X"))
+
+            # 获得所有 bookmark name 列表, 一边自动提示功能
+            if len(self.bm_name_list) < 1:
+                bm_list = BMSetting().getbm()
+                for bm_name in bm_list:
+                    self.bm_name_list.append(bm_name)
+        ### 打开当前光标所在位置的书签: 跟之前的高亮不大一样，这里只匹配书签名，没有 @ 也可以。
+        else:
+            #example ~hick ~python ~doc
+            curr_view = self.window.active_view()
+            selection = curr_view.sel()[0]
+            word_region = curr_view.word(selection.a)
+            ### 获得 word 单词： 定义似乎是连续字母汉字下划线
+            word = curr_view.substr(word_region)
+            ### 这里限定独立文字，也就是两边都是空格等非文字字符才算书签，不需要排除汉字和下划线干扰
+            ### 如果当前单词是某个书签，则直接跳转 hick
+            bookmark = BMSetting().getbm(word)
+            # 有找到对应的 bookmark 信息就跳转
+            if len(bookmark) > 1:
+                self.after_input_name(word)
+            else:
+                sublime.status_message("!!! get no bookmark for current word: %s" % word)
+
+            ###test hickpad
+            # print(bookmark)
+            # print(len(bookmark)) 
+            # print(BookmarkGotoCommand.after_input_name(self, word)) 
+            ### 判断选区是否为空: word-hick_hick!34345(6d)
+            #selection.empty()
+            ### 返回光标所在位置的单词的 region
+            # print(self.view.word(selection.a))
+            return
 
 
     ### 处理输入的书签名

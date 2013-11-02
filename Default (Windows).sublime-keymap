@@ -1,5 +1,7 @@
 [
     { "keys": ["ctrl+e", "ctrl+e"], "command": "goto_windows_explorer"},
+    { "keys": ["ctrl+alt+o"], "command": "bookmark_goto","args":{"ref":"point"} },
     { "keys": ["f8"], "command": "bookmark_set"},
-	{ "keys": ["f12"], "command": "bookmark_goto"}
+	{ "keys": ["f12"], "command": "bookmark_goto","args":{"ref":"input"}}
 ]
+
