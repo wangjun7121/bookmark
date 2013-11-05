@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import sublime, sublime_plugin
+import webbrowser
 import time
 import os
 
@@ -383,3 +384,13 @@ class GotoWindowsExplorerCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         curr_path = os.path.dirname(self.view.file_name())
         os.popen("explorer /e," + curr_path)
+
+
+"""
+调用 chrome 打开当前 view
+"""
+class GotoChromeCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        chromePath = 'D:\\Program\\Chrome\\chrome.exe'
+        webbrowser.register('chrome', None, webbrowser.BackgroundBrowser(chromePath))
+        webbrowser.get('chrome').open_new_tab(self.view.file_name())
