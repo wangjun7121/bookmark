@@ -90,37 +90,44 @@ class BookmarkEvent(sublime_plugin.EventListener):
     scopes_for_view = {}
     ignored_views = []
 
-    # # 鼠标点击下之前
-    # def on_pre_mouse_down(self, args):
-        # print("on pre-click!", args)
-
-    # 鼠标点击下以后
-    def on_post_mouse_down(self, point):
-        print(self)
-        # print("on post-click!", point)
+    def on_selection_modified(self, view):
         ### 只在 toc. 系列的索引 view 中生效
-        curr_view = sublime.active_window().active_view()
-        name = curr_view.name()
+        view = sublime.active_window().active_view()
+        name = view.name()
         if len(name) > 4:
             if 'toc.' == name[0:4]:
                 # 获得鼠标点击处的文本
-                line_sel = curr_view.line(point)
-                line_txt = curr_view.substr(line_sel)
+                line_sel = view.line(view.sel()[0])
+                line_txt = view.substr(line_sel)
                 # 尽可能还原能匹配原原本的值: 后续考虑用 bookmark 式的临时 region 会方便很多
                 line_txt = r"\n%s" % line_txt
                 # title 中出现 () 等正则特殊符号则需要转义
                 line_txt = line_txt.replace('(', '\(').replace(')', '\)')
                 # 确保文件打开(如果文件没打开，第一次没有渲染完，需要再点击一次，懒得改了，挺合理)
+                # 曾经出现点一次第二组的 view 触发两次本事件，焦点跳走以后就只触发一次了
                 sublime.active_window().focus_group(0)
                 tocedview = sublime.active_window().open_file(name[4:])
                 # 使居中
                 regions = tocedview.find_all(line_txt)
                 tocedview.show_at_center(regions[0])
-                curr_view.sel().clear()
-                curr_view.sel().add(regions[0])
-                # print(curr_view.substr(line_sel))
+                view.sel().clear()
+                view.sel().add(regions[0])
+                # print(view.substr(line_sel))
+
+
+                print("%s,%s,%s,%s" % (time.strftime('%Y-%m-%d %X'), view.name(), view.sel()[0], line_txt))
+
         
-        pass
+
+
+    # # 鼠标点击下之前
+    # def on_pre_mouse_down(self, args):
+        # print("on pre-click!", args)
+
+    # 鼠标点击下以后: 之前装了 MouseEventListener 才有用
+    # def on_post_mouse_down(self, point):
+    #     print(self)
+    #     pass
 
     """
     其实最好参考 API 和这里全部都定义 https://github.com/titoBouzout/BufferScroll/blob/master/BufferScroll.py
@@ -490,12 +497,12 @@ class TocViewCommand(sublime_plugin.TextCommand):
             tocview.end_edit(edit)
 
             # 不允许编辑
-            tocview.set_read_only(True)
+            # tocview.set_read_only(True)
                 
             # print("debug@%s columns done: %s " % (time.strftime("%Y-%m-%d %X"), title_sels))
 
             # 确保聚焦到编辑
-            win.focus_group(0)
+            # win.focus_group(0)
 
         
 
