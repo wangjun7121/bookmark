@@ -1,8 +1,20 @@
 [
+    { "keys": ["alt+d"], "command": "test"}, 
+
     { "keys": ["ctrl+e", "ctrl+e"], "command": "goto_windows_explorer"}, 
     { "keys": ["ctrl+e", "ctrl+c"], "command": "goto_chrome"}, 
     { "keys": ["ctrl+alt+o"], "command": "bookmark_goto","args":{"ref":"point"} },
+    { "keys": ["ctrl+enter"], "command": "bookmark_goto","args":{"ref":"point"} },
     { "keys": ["f8"], "command": "bookmark_set"},
+    // outline
+    { "keys": ["alt+1"], "command": "toc_view","args":{"opt":"1"}},
+    { "keys": ["alt+2"], "command": "toc_view","args":{"opt":"2"}},
+    { "keys": ["alt+3"], "command": "toc_view","args":{"opt":"3"}},
+    { "keys": ["alt+4"], "command": "toc_view","args":{"opt":"4"}},
+    { "keys": ["alt+5"], "command": "toc_view","args":{"opt":"5"}},
+    { "keys": ["alt+6"], "command": "toc_view","args":{"opt":"6"}},
+
+
 	{ "keys": ["f12"], "command": "bookmark_goto","args":{"ref":"input"}}
 ]
 

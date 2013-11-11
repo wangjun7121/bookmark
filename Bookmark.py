@@ -5,6 +5,7 @@ import webbrowser
 import time
 import os
 
+# import wxpython
 
 """
 
@@ -89,6 +90,38 @@ class BookmarkEvent(sublime_plugin.EventListener):
     scopes_for_view = {}
     ignored_views = []
 
+    # # 鼠标点击下之前
+    # def on_pre_mouse_down(self, args):
+        # print("on pre-click!", args)
+
+    # 鼠标点击下以后
+    def on_post_mouse_down(self, point):
+        print(self)
+        # print("on post-click!", point)
+        ### 只在 toc. 系列的索引 view 中生效
+        curr_view = sublime.active_window().active_view()
+        name = curr_view.name()
+        if len(name) > 4:
+            if 'toc.' == name[0:4]:
+                # 获得鼠标点击处的文本
+                line_sel = curr_view.line(point)
+                line_txt = curr_view.substr(line_sel)
+                # 尽可能还原能匹配原原本的值: 后续考虑用 bookmark 式的临时 region 会方便很多
+                line_txt = r"\n%s" % line_txt
+                # title 中出现 () 等正则特殊符号则需要转义
+                line_txt = line_txt.replace('(', '\(').replace(')', '\)')
+                # 确保文件打开(如果文件没打开，第一次没有渲染完，需要再点击一次，懒得改了，挺合理)
+                sublime.active_window().focus_group(0)
+                tocedview = sublime.active_window().open_file(name[4:])
+                # 使居中
+                regions = tocedview.find_all(line_txt)
+                tocedview.show_at_center(regions[0])
+                curr_view.sel().clear()
+                curr_view.sel().add(regions[0])
+                # print(curr_view.substr(line_sel))
+        
+        pass
+
     """
     其实最好参考 API 和这里全部都定义 https://github.com/titoBouzout/BufferScroll/blob/master/BufferScroll.py
     """
@@ -119,6 +152,7 @@ class BookmarkEvent(sublime_plugin.EventListener):
 
     # 修改文本的事件
     def on_modified(self, view):
+        self.get_input(view)    
         self.highlight_bookmark(view)    
 
     def on_close(self, view):
@@ -126,6 +160,17 @@ class BookmarkEvent(sublime_plugin.EventListener):
         for map in [self.bookmarks_for_view, self.scopes_for_view, self.ignored_views]:
             if view.id() in map:
                 del map[view.id()]
+
+    ### test for input
+    def get_input(self, view):
+        # curr_view = self.window.active_view()
+        curr_view = view 
+        selection = curr_view.sel()[0]
+        # word_region = curr_view.word(selection.a)
+        ### 获得 word 单词： 定义似乎是连续字母汉字下划线 
+        word = curr_view.substr(selection.a - 1)   
+        # print(word == "\t") #不奏效
+        # print(word)     #hick
 
     def highlight_bookmark(self, view): 
         ###hick 如果在忽略的列表则不渲染
@@ -157,8 +202,9 @@ class BookmarkEvent(sublime_plugin.EventListener):
             ### 这里有相关颜色的定义 http://tmtheme-editor.herokuapp.com/ https://github.com/aziz/tmtheme-editor
             ###hick icon 为行号旁边的图标，还可以是  dot, circle, bookmark 和 cross.
 
-            ### example ~test 
+            ### example ~test_timeout
             ### example ~doc
+
             view.add_regions(u'visitable-bookmarks ' + scope_name, scope_map[scope_name], "comtment", icon="dot", flags=sublime.DRAW_EMPTY_AS_OVERWRITE)
         self.scopes_for_view[view.id()] = scope_map.keys()
 
@@ -167,7 +213,7 @@ class BookmarkEvent(sublime_plugin.EventListener):
             for scope_name in self.scopes_for_view[view.id()]:
                 view.erase_regions(u'visitable-bookmarks ' + scope_name)
  
-    ### 保存当前 view 的书签  
+    ### 保存当前 view 的书签
     def save_bookmark(self, view): 
 
         ### 计时统计下消耗时间看看
@@ -180,6 +226,8 @@ class BookmarkEvent(sublime_plugin.EventListener):
                 # 获得最新位置以后保存： 经实测是删除不了的，万一有不存在，不保存就是
                 region = view.get_regions(BMSetting.bmkey + bookmark_name)
                 # 如果没找到则跳过： 确信过删除不了的，以后考虑单独删除
+                if len(region) < 1:
+                    continue
                 bm_list[bookmark_name]['a'] = region[0].a
                 bm_list[bookmark_name]['b'] = region[0].b
 
@@ -394,3 +442,60 @@ class GotoChromeCommand(sublime_plugin.TextCommand):
         chromePath = 'D:\\Program\\Chrome\\chrome.exe'
         webbrowser.register('chrome', None, webbrowser.BackgroundBrowser(chromePath))
         webbrowser.get('chrome').open_new_tab(self.view.file_name())
+
+"""
+调试命令
+"""
+class TocViewCommand(sublime_plugin.TextCommand):
+    def run(self, edit, opt = None):
+        # 如果已经有俩列了，则表示合成一列
+        win = self.view.window()
+
+        if win.num_groups() > 1:
+            params = {"cols": [0.0, 1.0],"rows": [0.0, 1.0], "cells": [[0, 0, 1, 1]]}
+            win.set_layout(params)
+            # 关闭 toc 的 view ，要不然每次打开一次多一个: 官方没有提供 view 的关闭方法，下面是折衷的
+            # 意外的"动画"效果，就不改造先关再改变布局了
+            for v in win.views():
+                vname = v.name()
+                if 'toc.' == vname[0:4]:
+                    win.focus_view(v)
+                    v.set_scratch(True) # 这行放弃所有修改
+                    win.run_command("close_file")
+
+
+        else:
+            win.set_layout({"cols": [0.0, 0.8, 1.0], "rows": [0.0, 1.0], "cells": [[0, 0, 1, 1], [1, 0, 2, 1]]})
+            # 聚焦到 toc 窗口以后创建 buffer
+            win.focus_group(1)
+
+            # 查找到所有 title
+            insert_txt = ""
+            title_sels = self.view.find_all("[\n]+#.*")
+            for sel in title_sels:
+                # 根据传递的参数 opt 决定显示的层次: #出现次数超过 opt+1 个就需要忽略
+                curr_title = self.view.substr(sel).strip()
+                invalid_str = '#'*(1 + int(opt))
+                if curr_title.find(invalid_str) > -1:
+                    continue
+                
+                insert_txt = "%s\n%s" % (insert_txt, curr_title)
+
+            # 插入到编辑器
+            tocview = win.new_file()
+            ### 在被索引文件被切换走，甚至关闭的时候，也能跳转到，这里记录打开文件名，比如 toc.f:/hick.md
+            # 在文件被切换走以后， window.open_file(filename) 能切换或者重新打开文件
+            tocview.set_name('toc.%s' % self.view.file_name())
+            tocview.insert(edit, 0, insert_txt)
+            tocview.end_edit(edit)
+
+            # 不允许编辑
+            tocview.set_read_only(True)
+                
+            # print("debug@%s columns done: %s " % (time.strftime("%Y-%m-%d %X"), title_sels))
+
+            # 确保聚焦到编辑
+            win.focus_group(0)
+
+        
+
