@@ -110,8 +110,8 @@ class BookmarkEvent(sublime_plugin.EventListener):
                 # 使居中
                 regions = tocedview.find_all(line_txt)
                 tocedview.show_at_center(regions[0])
-                view.sel().clear()
-                view.sel().add(regions[0])
+                # view.sel().clear()
+                # view.sel().add(regions[0])
                 # print(view.substr(line_sel))
 
 
