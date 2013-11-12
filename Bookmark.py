@@ -477,6 +477,7 @@ class TocViewCommand(sublime_plugin.TextCommand):
             win.focus_group(1)
 
             # 查找到所有 title
+            # 后续可以走 view.symbols() 获得标题而不是靠以前的 # 匹配的方式
             insert_txt = ""
             title_sels = self.view.find_all("[\n]+#.*")
             for sel in title_sels:
