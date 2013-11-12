@@ -91,8 +91,8 @@ class BookmarkEvent(sublime_plugin.EventListener):
     ignored_views = []
 
     def on_selection_modified(self, view):
-        ### 只在 toc. 系列的索引 view 中生效
-        view = sublime.active_window().active_view()
+        ### 只在 toc. 系列的索引 view 中生效 hick
+        # view = sublime.active_window().active_view()
         name = view.name()
         if len(name) > 4:
             if 'toc.' == name[0:4]:
