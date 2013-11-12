@@ -115,7 +115,7 @@ class BookmarkEvent(sublime_plugin.EventListener):
                 # print(view.substr(line_sel))
 
 
-                print("%s,%s,%s,%s" % (time.strftime('%Y-%m-%d %X'), view.name(), view.sel()[0], line_txt))
+    #             # print("%s,%s,%s,%s" % (time.strftime('%Y-%m-%d %X'), view.name(), view.sel()[0], line_txt))
 
         
 
@@ -495,6 +495,7 @@ class TocViewCommand(sublime_plugin.TextCommand):
             tocview.set_name('toc.%s' % self.view.file_name())
             tocview.insert(edit, 0, insert_txt)
             tocview.end_edit(edit)
+
 
             # 不允许编辑
             # tocview.set_read_only(True)
