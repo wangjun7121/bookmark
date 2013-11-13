@@ -500,6 +500,9 @@ class TocViewCommand(sublime_plugin.TextCommand):
             ###!!! 下面这段代码导致原主窗口光标混乱，估计原因是 edit 本来是主窗口的，这里切换到另外的窗口混乱了
             tocview.run_command('append', {'characters': insert_txt, 'force': True, 'scroll_to_end': True})
 
+            # 语法解析
+            tocview.set_syntax_file('Packages/Markdown/Markdown.tmLanguage')
+
 
             # # 不允许编辑
             # tocview.set_read_only(True)
