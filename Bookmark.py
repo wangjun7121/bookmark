@@ -90,7 +90,7 @@ class BookmarkEvent(sublime_plugin.EventListener):
     scopes_for_view = {}
     ignored_views = []
 
-    def on_selection_modified(self, view):
+    def on_selection_modified_async(self, view):
         ### 只在 toc. 系列的索引 view 中生效 hick
         # view = sublime.active_window().active_view()
         name = view.name()
@@ -105,20 +105,22 @@ class BookmarkEvent(sublime_plugin.EventListener):
                 line_txt = line_txt.replace('(', '\(').replace(')', '\)')
                 # 确保文件打开(如果文件没打开，第一次没有渲染完，需要再点击一次，懒得改了，挺合理)
                 # 曾经出现点一次第二组的 view 触发两次本事件，焦点跳走以后就只触发一次了
-                sublime.active_window().focus_group(0)
-                tocedview = sublime.active_window().open_file(name[4:])
+                win = sublime.active_window()
+                win.focus_group(0)
+                tocedview = win.open_file(name[4:])
+                win.focus_view(tocedview)
+                
                 # 使居中
                 regions = tocedview.find_all(line_txt)
-                tocedview.show_at_center(regions[0])
-                # view.sel().clear()
-                # view.sel().add(regions[0])
-                # print(view.substr(line_sel))
-
+                if len(regions) > 0:
+                    tocedview.show_at_center(regions[0])
+                    tocedview.sel().clear()
+                    tocedview.sel().add(regions[0].b + 1) #偏移一个位置避免误操作
 
     #             # print("%s,%s,%s,%s" % (time.strftime('%Y-%m-%d %X'), view.name(), view.sel()[0], line_txt))
 
         
-
+    pass
 
     # # 鼠标点击下之前
     # def on_pre_mouse_down(self, args):
@@ -489,21 +491,22 @@ class TocViewCommand(sublime_plugin.TextCommand):
                 
                 insert_txt = "%s\n%s" % (insert_txt, curr_title)
 
-            # 插入到编辑器
+            # # 插入到编辑器
             tocview = win.new_file()
-            ### 在被索引文件被切换走，甚至关闭的时候，也能跳转到，这里记录打开文件名，比如 toc.f:/hick.md
-            # 在文件被切换走以后， window.open_file(filename) 能切换或者重新打开文件
+            # ### 在被索引文件被切换走，甚至关闭的时候，也能跳转到，这里记录打开文件名，比如 toc.f:/hick.md
+            # # 在文件被切换走以后， window.open_file(filename) 能切换或者重新打开文件
             tocview.set_name('toc.%s' % self.view.file_name())
-            tocview.insert(edit, 0, insert_txt)
-            tocview.end_edit(edit)
+
+            ###!!! 下面这段代码导致原主窗口光标混乱，估计原因是 edit 本来是主窗口的，这里切换到另外的窗口混乱了
+            tocview.run_command('append', {'characters': insert_txt, 'force': True, 'scroll_to_end': True})
 
 
-            # 不允许编辑
+            # # 不允许编辑
             # tocview.set_read_only(True)
                 
-            # print("debug@%s columns done: %s " % (time.strftime("%Y-%m-%d %X"), title_sels))
+            # # print("debug@%s columns done: %s " % (time.strftime("%Y-%m-%d %X"), title_sels))
 
-            # 确保聚焦到编辑
+            # # 确保聚焦到编辑
             # win.focus_group(0)
 
         
