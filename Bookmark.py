@@ -22,6 +22,65 @@ hick; hickwu@qq.com
 
 
 
+
+
+############ toc 视图默认需要 alt+[1-5]调出，切换到其他 markdown 视图以后并不会自动更新，这样也方便点击跳回去; 
+# 但是如果点击的是 tab title , 再按 f5 ，则时候会更新
+def markdown_view():
+    pass
+    # win = sublime.active_window()
+    # view = win.active_view()
+    # # 确认当前的语法解析格式: 只有 markdown 格式才解析
+    # if view.settings().get('syntax').find('Markdown.tmLanguage') < 0:
+    #     return
+    # # 如果是当前 view 是 toc view 也不做再处理
+    # if 'toc.' == view.name()[0:4]:
+    #     return
+    # # 如果当前不是两列模式，切换成两列
+    # if win.num_groups() != 2:
+    #     win.set_layout({"cols": [0.0, 0.8, 1.0], "rows": [0.0, 1.0], "cells": [[0, 0, 1, 1], [1, 0, 2, 1]]})
+    # # 只处理当前 view 是在第一列， 列索引为 0 的
+    # if 0 != win.get_view_index(view)[0] :
+    #     return
+
+    # # 获得第二列 view
+    # tocview = win.active_view_in_group(1)
+
+    # # 如果第二列没有 view ， 则打开一个 view: 下面的新建可能导致问题，先不这么处理
+    # # if None == tocview:
+    # #     tocview = win.new_file()
+
+    # # 这个时候右侧可能是个空 view ， 可能也已经是个 view
+
+
+    # opt = 5  ### 这里先处理为显示全部，后续保存到某个地方作为当前的层级
+    # insert_txt = ""
+    # title_sels = view.find_all("[\n]+#.*")
+    # for sel in title_sels:
+    #     # 根据传递的参数 opt 决定显示的层次: #出现次数超过 opt+1 个就需要忽略
+    #     curr_title = view.substr(sel).strip()
+    #     invalid_str = '#'*(1 + int(opt))
+    #     if curr_title.find(invalid_str) > -1:
+    #         continue
+        
+    #     insert_txt = "%s\n%s" % (insert_txt, curr_title)
+
+    # insert_txt = "%s\n" % (insert_txt)
+
+    # # # 插入到编辑器
+    # # win.focus_group(1)
+    # # tocview = win.new_file()
+    # # ### 在被索引文件被切换走，甚至关闭的时候，也能跳转到，这里记录打开文件名，比如 toc.f:/hick.md
+    # # # 在文件被切换走以后， window.open_file(filename) 能切换或者重新打开文件
+    # tocview.set_name('toc.%s' % view.file_name())
+
+    # ###!!! 下面这段代码导致原主窗口光标混乱，估计原因是 edit 本来是主窗口的，这里切换到另外的窗口混乱了
+    # tocview.run_command('append', {'characters': insert_txt, 'force': True, 'scroll_to_end': True})
+
+    # # 语法解析
+    # tocview.set_syntax_file('Packages/Markdown/Markdown.tmLanguage')
+
+
 class BMSetting:
     """
     配置文件操作封装
@@ -89,6 +148,11 @@ class BookmarkEvent(sublime_plugin.EventListener):
     ### 保存每个 view 的 scope 列表
     scopes_for_view = {}
     ignored_views = []
+
+    # 视图被激活的时候做的操作
+    def on_activated_async(self, view):
+        markdown_view()
+
 
     def on_selection_modified_async(self, view):
         ### 只在 toc. 系列的索引 view 中生效 hick
@@ -448,7 +512,12 @@ class GotoWindowsExplorerCommand(sublime_plugin.TextCommand):
 """
 class GotoChromeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
+
         chromePath = 'D:\\Program\\Chrome\\chrome.exe'
+        chromePath2 = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+        if not os.path.isfile(chromePath):
+            chromePath = chromePath2
+        print(os.path.isfile(chromePath))
         webbrowser.register('chrome', None, webbrowser.BackgroundBrowser(chromePath))
         webbrowser.get('chrome').open_new_tab(self.view.file_name())
 
@@ -491,6 +560,8 @@ class TocViewCommand(sublime_plugin.TextCommand):
                 
                 insert_txt = "%s\n%s" % (insert_txt, curr_title)
 
+            insert_txt = "%s\n" % (insert_txt)
+
             # # 插入到编辑器
             tocview = win.new_file()
             # ### 在被索引文件被切换走，甚至关闭的时候，也能跳转到，这里记录打开文件名，比如 toc.f:/hick.md
@@ -513,4 +584,60 @@ class TocViewCommand(sublime_plugin.TextCommand):
             # win.focus_group(0)
 
         
+
+"""
+当前光标位置插入当前时间
+"""
+class InsertTimeCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        insert_txt = time.strftime("- [%Y-%m-%d %X]\t");
+        self.view.run_command('insert', {'characters': insert_txt, 'force': True, 'scroll_to_end': True})
+
+
+'''
+toc 视图默认需要 alt+[1-5]调出，切换到其他 markdown 视图以后并不会自动更新，这样也方便点击跳回去; 
+但是如果点击的是 tab title (由于跳转问题，点击 view 正文没用), 再按 f5 ，则时候会更新
+'''
+class TocUpdateCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        win = sublime.active_window()
+        view = win.active_view()
+        toc_view = view
+        # 只处理当前视图是 toc: 的情况
+        if 'toc.' != view.name()[0:4]:
+            return
+        # 获得 group[0] 的当前 view, 不管是不是 markdown , 当作 markdown 解析，并更新 tocview
+        md_view = win.active_view_in_group(0)
+        # 预防没有取到的情况
+        if None == md_view:
+            return
+        # 先清空处理当前 toc view
+        toc_view.set_name('toc.%s' % md_view.file_name())
+        full_edit = sublime.Region(0, toc_view.size())  # 这个 Region 的用法摸索出来的
+        toc_view.erase(edit, full_edit)
+
+        # 重新生成 toc
+        title_sels = md_view.find_all("[\n]+#.*")
+        insert_txt = ""
+        opt = 5  # 先写死，后边记住之前的定义
+        for sel in title_sels:
+            # 根据传递的参数 opt 决定显示的层次: #出现次数超过 opt+1 个就需要忽略
+            curr_title = md_view.substr(sel).strip()
+            invalid_str = '#'*(1 + int(opt))
+            if curr_title.find(invalid_str) > -1:
+                continue
+            
+            insert_txt = "%s\n%s" % (insert_txt, curr_title)
+
+        insert_txt = "%s\n" % (insert_txt)
+
+        ###!!! 下面这段代码导致原主窗口光标混乱，估计原因是 edit 本来是主窗口的，这里切换到另外的窗口混乱了
+        toc_view.run_command('append', {'characters': insert_txt, 'force': True, 'scroll_to_end': True})
+
+        # 语法解析
+        toc_view.set_syntax_file('Packages/Markdown/Markdown.tmLanguage')
+        # 焦点转到 group 0
+        win.focus_group(0)
+
+
 
