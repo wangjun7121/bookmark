@@ -11,6 +11,7 @@ sublime text 自带的 bookmark 比较简单，不支持自定义名字的书签
 
 **特点**
 
+- 为 markdown 格式生成目录(toc: table of content)
 - 支持命名书签
 - 退出 sublime text 自动保存书签
 - 书签对应的文件没有打开时自动打开
