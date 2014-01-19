@@ -6,7 +6,7 @@
     { "keys": ["ctrl+alt+o"], "command": "bookmark_goto","args":{"ref":"point"} },
     { "keys": ["ctrl+enter"], "command": "bookmark_goto","args":{"ref":"point"} },
     { "keys": ["f8"], "command": "bookmark_set"},
-    { "keys": ["f5"], "command": "toc_update"},  // 更新当前视图
+    { "keys": ["f5"], "command": "toc_update"},  // update toc
     // outline
     { "keys": ["alt+1"], "command": "toc_view","args":{"opt":"1"}},
     { "keys": ["alt+2"], "command": "toc_view","args":{"opt":"2"}},

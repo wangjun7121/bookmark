@@ -28,6 +28,8 @@ git clone 本代码库到 bookmark 文件夹，或者下载 zip 解压，直接�
   回车打开第一个匹配的书签；也可以根据状态栏提示编号，按数字键选择书签
 - windows 下打开某个文件以后，`ctrl-e e`(按住 ctrl 不放，连按两次 e)调用资源管
   理器打开所在目录
+- 打开 markdown 文件以后，按 alt+1/2/3/4/5 可以自动打开一个小窗口，显示当前 markdown
+  的 目录(toc: table of content)
  
 **注意**
 
