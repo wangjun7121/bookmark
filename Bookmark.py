@@ -142,7 +142,7 @@ class BMSetting:
 ### 测试监听事件 
 class BookmarkEvent(sublime_plugin.EventListener):
 
-    BOOKMARK_REG = "~[A-Za-z0-9]+"
+    BOOKMARK_REG = "~[A-Za-z0-9_]+"
     MAX_HIGHLIGHT_ONE_VIEW = 200
     bookmarks_for_view = {}
     ### 保存每个 view 的 scope 列表
@@ -271,11 +271,11 @@ class BookmarkEvent(sublime_plugin.EventListener):
             ###hick 加下划线
             ###hick 下划线颜色由 flags 前面的参数决定，可以是 
             ### string comtment invalid  keyword entity constant storage support variable 
-            ### 白色    灰色    深橙-for 深橙-for   --- 貌似颜色是跟主体相关的
+            ### 白色    灰色    深橙-for 深橙-for   --- 貌似颜色是跟主题相关的
             ### 这里有相关颜色的定义 http://tmtheme-editor.herokuapp.com/ https://github.com/aziz/tmtheme-editor
             ###hick icon 为行号旁边的图标，还可以是  dot, circle, bookmark 和 cross.
 
-            ### example ~test_timeout
+            ### example ~test_timeoutd  ~hick-tag
             ### example ~doc
 
             view.add_regions(u'visitable-bookmarks ' + scope_name, scope_map[scope_name], "comtment", icon="dot", flags=sublime.DRAW_EMPTY_AS_OVERWRITE)
