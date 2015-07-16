@@ -16,6 +16,8 @@ sublime text 自带的 bookmark 比较简单，不支持自定义名字的书签
 - 退出 sublime text 自动保存书签
 - 书签对应的文件没有打开时自动打开
 
+![http://emacsist.com/static/img/sublime-bookmark.gif](http://emacsist.com/static/img/sublime-bookmark.gif)
+
 **安装**
 
 git clone 本代码库到 bookmark 文件夹，或者下载 zip 解压，直接放在 sublime text 
